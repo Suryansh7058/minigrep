@@ -1,0 +1,41 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - aarch64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools
+        if: matrix.target == 'x86_64-pc-windows-gnu'
+        run: sudo apt-get install -y mingw-w64
+
+      - name: Build for ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            target/${{ matrix.target }}/release/minigrep${{ matrix.target == 'x86_64-pc-windows-gnu' && '.exe' || '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

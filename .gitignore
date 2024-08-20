@@ -1,1 +1,4 @@
 /target
+# Ignore .tar.gz and .zip files
+*.tar.gz
+*.zip
